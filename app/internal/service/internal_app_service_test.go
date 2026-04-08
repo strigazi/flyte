@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	appconfig "github.com/flyteorg/flyte/v2/app/config"
+	appconfig "github.com/flyteorg/flyte/v2/app/internal/config"
 	flyteapp "github.com/flyteorg/flyte/v2/gen/go/flyteidl2/app"
 	"github.com/flyteorg/flyte/v2/gen/go/flyteidl2/app/appconnect"
 	flytecoreapp "github.com/flyteorg/flyte/v2/gen/go/flyteidl2/core"
@@ -74,8 +74,8 @@ func (m *mockAppK8sClient) Watch(ctx context.Context, project, domain, appName s
 
 // --- helpers ---
 
-func testCfg() *appconfig.AppConfig {
-	return &appconfig.AppConfig{
+func testCfg() *appconfig.InternalAppConfig {
+	return &appconfig.InternalAppConfig{
 		Enabled:               true,
 		BaseDomain:            "apps.example.com",
 		DefaultRequestTimeout: 5 * time.Minute,
