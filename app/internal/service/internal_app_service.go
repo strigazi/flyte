@@ -60,23 +60,37 @@ func (s *InternalAppService) Create(
 				LastTransitionTime: timestamppb.Now(),
 			},
 		},
-		Ingress: publicIngress(app.GetMetadata().GetId(), s.cfg.BaseDomain),
+		Ingress: publicIngress(app.GetMetadata().GetId(), s.cfg),
 	}
 
 	return connect.NewResponse(&flyteapp.CreateResponse{App: app}), nil
 }
 
 // publicIngress builds the deterministic public URL for an app.
-// Pattern: "https://{name}-{project}-{domain}.{base_domain}"
-// Returns nil if BaseDomain is not configured.
-func publicIngress(id *flyteapp.Identifier, baseDomain string) *flyteapp.Ingress {
-	if baseDomain == "" {
+// When Traefik ingress is enabled (IngressEnabled + IngressBaseURL), the URL is
+// path-based: {base}/{project}/{domain}/{app}.
+// Otherwise falls back to the Knative host pattern: {scheme}://{name}-{project}-{domain}.{base_domain}.
+// Returns nil if neither is configured.
+func publicIngress(id *flyteapp.Identifier, cfg *appconfig.InternalAppConfig) *flyteapp.Ingress {
+	if cfg.IngressEnabled && cfg.IngressBaseURL != "" {
+		return &flyteapp.Ingress{
+			PublicUrl: fmt.Sprintf("%s/%s/%s/%s",
+				strings.TrimRight(cfg.IngressBaseURL, "/"),
+				id.GetProject(), id.GetDomain(), id.GetName(),
+			),
+		}
+	}
+	if cfg.BaseDomain == "" {
 		return nil
 	}
+	scheme := cfg.Scheme
+	if scheme == "" {
+		scheme = "https"
+	}
 	host := strings.ToLower(fmt.Sprintf("%s-%s-%s.%s",
-		id.GetName(), id.GetProject(), id.GetDomain(), baseDomain))
+		id.GetName(), id.GetProject(), id.GetDomain(), cfg.BaseDomain))
 	return &flyteapp.Ingress{
-		PublicUrl: "https://" + host,
+		PublicUrl: scheme + "://" + host,
 	}
 }
 

@@ -72,11 +72,11 @@ build: sync-crds flyte console dep_update manifests
 		--tag flyte-sandbox-v2:latest .
 
 # Port map
-# 6443 - k8s API server
+# 6443  - k8s API server
 # 30000 - Docker Registry
 # 30001 - DB
 # 30002 - Minio
-# 30080 - Flyte Proxy
+# 30080 - Flyte Proxy (Traefik nodePort)
 .PHONY: start
 start: FLYTE_SANDBOX_IMAGE := flyte-sandbox-v2:latest
 start: FLYTE_DEV := False
@@ -115,6 +115,18 @@ start:
 kubeconfig:
 	sed -i -e "/server:/ s/: .*/: https:\/\/127.0.0.1:$(shell docker port flyte-sandbox | grep ^6443 | awk '{print $$3}' | awk -F: '{print $$2}')/" .kube/kubeconfig
 	echo "export KUBECONFIG=$(PWD)/.kube/kubeconfig"
+
+.PHONY: setup-knative
+setup-knative:
+	kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.16.0/serving-crds.yaml
+	kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.16.0/serving-core.yaml
+	kubectl apply -f https://github.com/knative-extensions/net-kourier/releases/download/knative-v1.16.0/kourier.yaml
+	kubectl patch configmap/config-network -n knative-serving --type merge \
+		--patch '{"data":{"ingress-class":"kourier.ingress.networking.knative.dev"}}'
+	kubectl patch configmap/config-network -n knative-serving --type merge \
+		--patch '{"data":{"domain-template":"{{.Name}}-{{.Namespace}}.{{.Domain}}"}}'
+	kubectl patch configmap/config-domain -n knative-serving --type merge \
+		--patch '{"data":{"local.flyte.app":""}}'
 
 .PHONY: stop
 stop:

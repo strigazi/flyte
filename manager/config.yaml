@@ -13,6 +13,32 @@ manager:
     namespace: "flyte"
     kubeconfig: "~/.kube/config"
 
+  apps:
+    cacheTtl: 30s
+
+  internalApps:
+    enabled: true
+    baseDomain: "local.flyte.app"
+    scheme: "http"
+    defaultRequestTimeout: 300s
+    maxRequestTimeout: 3600s
+    ingressEnabled: true
+    ingressEntryPoint: "web"
+    ingressBaseUrl: "http://localhost:30080"
+    defaultEnvVars:
+      - name: FLYTE_AWS_ENDPOINT
+        value: "http://flyte-sandbox-minio.flyte.svc.cluster.local:9000"
+      - name: FLYTE_AWS_ACCESS_KEY_ID
+        value: "minio"
+      - name: FLYTE_AWS_SECRET_ACCESS_KEY
+        value: "miniostorage"
+      - name: _U_EP_OVERRIDE
+        value: "flyte-sandbox-local.flyte.svc.cluster.local:8090"
+      - name: _U_INSECURE
+        value: "true"
+      - name: _U_USE_ACTIONS
+        value: "1"
+
 
 # Webhook configuration
 # localCert: true writes the generated TLS cert to disk so the webhook server can read it.

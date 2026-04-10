@@ -41,8 +41,9 @@ sandbox-build: ## Build and start the flyte sandbox (docker/sandbox-bundled)
 
 # Run in dev mode with extra arg FLYTE_DEV=True
 .PHONY: sandbox-run
-sandbox-run: ## Start the flyte sandbox without rebuilding the image
-	$(MAKE) -C docker/sandbox-bundled start
+sandbox-run: ## Start the flyte sandbox and install Knative with app routing config
+	$(MAKE) -C docker/sandbox-bundled start FLYTE_DEV=$(FLYTE_DEV)
+	$(MAKE) -C docker/sandbox-bundled setup-knative
 
 .PHONY: sandbox-stop
 sandbox-stop: ## Stop the flyte sandbox
